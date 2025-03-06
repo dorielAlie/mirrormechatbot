@@ -49,14 +49,13 @@ def chat():
         return jsonify({"error": "Internal Server Error"}), 500
 
 def get_openai_response(user_input):
-    """ Fetch a response from OpenAI ChatGPT """
-    client = openai.OpenAI()  # ✅ Updated for OpenAI v1.0+
-    
+    client = openai.OpenAI()
     response = client.chat.completions.create(
-        model="gpt-4",
+        model="gpt-4-turbo",  # ✅ Use "gpt-4-turbo" or "gpt-3.5-turbo"
         messages=[{"role": "user", "content": user_input}]
     )
     return response.choices[0].message.content
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))  # ✅ Use dynamic port for Render
