@@ -19,29 +19,13 @@ except FileNotFoundError:
 openai.api_key = os.getenv("OPENAI_API_KEY")
 elevenlabs_api_key = os.getenv("ELEVENLABS_API_KEY")
 
-@app.route("/", methods=["GET"])
-def home():
-    return "Chatbot is running! Use /chat to talk to it."
-
-def get_trained_response(user_input):
-    """ Check if the user question exists in the chatbot database """
-    return chatbot_responses.get(user_input, None)
-
-def get_openai_response(user_input):
-    """ Fetch a response from OpenAI ChatGPT (Updated for OpenAI v1.0+) """
-    client = openai.OpenAI()  # ✅ New OpenAI format
-
-    response = client.chat.completions.create(
-        model="gpt-4",
-        messages=[{"role": "user", "content": user_input}]
-    )
-    return response.choices[0].message.content
-
-@app.route("/chat", methods=["POST"])  # ✅ Only allow POST requests
+@app.route("/chat", methods=["GET", "POST"])
 def chat():
-    """ Handle chatbot messages from Wix """
+    """ Handle chatbot messages from Wix and manual tests """
     try:
-        # Ensure JSON request format
+        if request.method == "GET":
+            return jsonify({"error": "Use POST instead."}), 405  # ✅ Sends an error for GET
+
         if request.content_type != "application/json":
             return jsonify({"error": "Unsupported Media Type. Use 'application/json'."}), 415
 
@@ -54,7 +38,7 @@ def chat():
         # Step 1: Check predefined responses
         response_text = get_trained_response(user_input)
 
-        # Step 2: If no match, use OpenAI and say "Checking outside..."
+        # Step 2: If no match, use OpenAI
         if response_text is None:
             response_text = "Checking outside... " + get_openai_response(user_input)
 
