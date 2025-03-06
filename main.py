@@ -42,60 +42,22 @@ def chat():
         if response_text is None:
             response_text = "Checking outside... " + get_openai_response(user_input)
 
-    # Step 3: Generate AI voice for the response
-    voice_file = generate_voice(response_text)
+        # Step 3: Generate AI voice for the response
+        try:
+            voice_file = generate_voice(response_text)
+        except Exception as e:
+            print(f"🔥 ERROR: ElevenLabs request failed - {str(e)}")
+            voice_file = None  # Fail gracefully if voice generation fails
 
-    return jsonify({
-        "reply": response_text,
-        "voice": voice_file if voice_file else None  # ✅ Returns audio file if successful
-    })
-    
+        return jsonify({
+            "reply": response_text,
+            "voice": voice_file if voice_file else None  # ✅ Returns audio file if successful
+        })
+
     except Exception as e:
         print(f"🔥 ERROR in /chat: {str(e)}")  # ✅ Log the error clearly
         return jsonify({"error": "Internal Server Error"}), 500
 
-def get_openai_response(user_input):
-    """Test function to check if OpenAI API works"""
-    try:
-        client = openai.OpenAI()
-        response = client.chat.completions.create(
-            model="gpt-4o",  # ✅ Ensure you're using a valid model
-            messages=[{"role": "user", "content": user_input}]
-        )
-        print(f"✅ OpenAI Response: {response.choices[0].message.content}")
-        return response.choices[0].message.content
-    except Exception as e:
-        print(f"🔥 ERROR: OpenAI API failed - {str(e)}")
-        return "Error: OpenAI request failed"
-
-def generate_voice(text):
-    """ Convert chatbot response to AI voice using ElevenLabs """
-    try:
-        ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
-        voice_url = "https://api.elevenlabs.io/v1/text-to-speech/tx"
-        headers = {
-            "xi-api-key": ELEVENLABS_API_KEY,
-            "Content-Type": "application/json"
-        }
-        data = {
-            "text": text,
-            "model_id": "eleven_turbo_v2",  # ✅ Fastest model
-            "voice_id": "Rachel"  # ✅ You can change this to another ElevenLabs voice
-        }
-
-        response = requests.post(voice_url, headers=headers, json=data)
-
-        if response.status_code == 200:
-            audio_filename = "response.mp3"
-            with open(audio_filename, "wb") as f:
-                f.write(response.content)
-            return audio_filename
-        else:
-            print(f"🔥 ERROR: ElevenLabs API failed - {response.text}")
-            return None
-    except Exception as e:
-        print(f"🔥 ERROR: ElevenLabs request failed - {str(e)}")
-        return None
 
 
 if __name__ == "__main__":
