@@ -54,10 +54,14 @@ def generate_voice(text):
     else:
         return None  # If voice generation fails
 
-@app.route("/chat", methods=["GET", "POST"])
+@app.route("/chat", methods=["POST"])
 def chat():
     """ Handle chatbot messages from Wix """
-    user_input = request.json.get("message", "")
+    if request.content_type != "application/json":
+        return jsonify({"error": "Unsupported Media Type. Use 'application/json'."}), 415
+
+    data = request.get_json()
+    user_input = data.get("message", "")
 
     # Step 1: Check predefined responses
     response_text = get_trained_response(user_input)
@@ -66,10 +70,8 @@ def chat():
     if response_text is None:
         response_text = "Checking outside... " + get_openai_response(user_input)
 
-    # Step 3: Generate AI voice for the response
-    voice_file = generate_voice(response_text)
+    return jsonify({"reply": response_text})
 
-    return jsonify({"reply": response_text, "voice": voice_file})
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))  # Use Replit’s assigned port
