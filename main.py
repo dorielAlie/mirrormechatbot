@@ -40,30 +40,33 @@ def generate_voice(text):
     """ Convert chatbot response to AI voice using ElevenLabs """
     try:
         ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
-        voice_url = "https://api.elevenlabs.io/v1/text-to-speech/tx"
+        voice_url = "https://api.elevenlabs.io/v1/text-to-speech/m5MFSBXJFU12dJBpGS6c"  # ✅ JP 26 Mins voice ID
         headers = {
             "xi-api-key": ELEVENLABS_API_KEY,
             "Content-Type": "application/json"
         }
         data = {
             "text": text,
-            "model_id": "eleven_turbo_v2",
-            "voice_id": "Rachel"
+            "model_id": "eleven_turbo_v2",  # ✅ ElevenLabs fast model
         }
+
+        print(f"🛠 Sending text to ElevenLabs: {text}")  # ✅ Debugging log
 
         response = requests.post(voice_url, headers=headers, json=data)
 
         if response.status_code == 200:
-            audio_filename = "response.mp3"
+            audio_filename = "static/response.mp3"
             with open(audio_filename, "wb") as f:
                 f.write(response.content)
-            return audio_filename
+            print(f"✅ ElevenLabs Audio Saved: {audio_filename}")
+            return f"https://mirrormechatbot.onrender.com/{audio_filename}"  # ✅ Return URL instead of local path
         else:
             print(f"🔥 ERROR: ElevenLabs API failed - {response.text}")
             return None
     except Exception as e:
         print(f"🔥 ERROR: ElevenLabs request failed - {str(e)}")
         return None
+
 
 @app.route("/chat", methods=["GET", "POST"])
 def chat():
@@ -95,10 +98,14 @@ def chat():
             print(f"🔥 ERROR: ElevenLabs request failed - {str(e)}")
             voice_file = None  # Fail gracefully if voice generation fails
 
+        if voice_file:
+            print(f"🎙️ Voice file generated: {voice_file}")
+
         return jsonify({
             "reply": response_text,
-            "voice": voice_file if voice_file else None
+            "voice_url": voice_file if voice_file else None
         })
+
 
     except Exception as e:
         print(f"🔥 ERROR in /chat: {str(e)}")  
