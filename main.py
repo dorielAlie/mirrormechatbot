@@ -49,12 +49,19 @@ def chat():
         return jsonify({"error": "Internal Server Error"}), 500
 
 def get_openai_response(user_input):
-    client = openai.OpenAI()
-    response = client.chat.completions.create(
-        model="gpt-4o",  # ✅ Use "gpt-4o" or "gpt-3.5-turbo"
-        messages=[{"role": "user", "content": user_input}]
-    )
-    return response.choices[0].message.content
+    """Test function to check if OpenAI API works"""
+    try:
+        client = openai.OpenAI()
+        response = client.chat.completions.create(
+            model="gpt-4-turbo",  # ✅ Ensure you're using a valid model
+            messages=[{"role": "user", "content": user_input}]
+        )
+        print(f"✅ OpenAI Response: {response.choices[0].message.content}")
+        return response.choices[0].message.content
+    except Exception as e:
+        print(f"🔥 ERROR: OpenAI API failed - {str(e)}")
+        return "Error: OpenAI request failed"
+
 
 
 if __name__ == "__main__":
