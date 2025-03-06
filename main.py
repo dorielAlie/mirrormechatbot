@@ -6,7 +6,7 @@ import os
 from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app, resources={r"/chat": {"origins": "*"}})  # ✅ Allow all external requests
+CORS(app, supports_credentials=True)  # ✅ Allow all external requests
 
 # Load predefined chatbot responses from JSON file
 try:
