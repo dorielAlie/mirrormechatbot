@@ -1,3 +1,4 @@
+from flask_cors import CORS
 from flask import Flask, request, jsonify
 import json
 import openai
@@ -5,6 +6,8 @@ import requests
 import os
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
+
 
 # Load predefined chatbot responses from JSON file
 with open("responses.json", "r") as file:
@@ -51,7 +54,7 @@ def generate_voice(text):
     else:
         return None  # If voice generation fails
 
-@app.route("/chat", methods=["POST"])
+@app.route("/chat", methods=["GET", "POST"])
 def chat():
     """ Handle chatbot messages from Wix """
     user_input = request.json.get("message", "")
