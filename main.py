@@ -53,7 +53,7 @@ def get_openai_response(user_input):
     try:
         client = openai.OpenAI()
         response = client.chat.completions.create(
-            model="gpt-4-turbo",  # ✅ Ensure you're using a valid model
+            model="gpt-4o",  # ✅ Ensure you're using a valid model
             messages=[{"role": "user", "content": user_input}]
         )
         print(f"✅ OpenAI Response: {response.choices[0].message.content}")
