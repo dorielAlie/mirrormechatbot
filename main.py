@@ -19,13 +19,29 @@ except FileNotFoundError:
 openai.api_key = os.getenv("OPENAI_API_KEY")
 elevenlabs_api_key = os.getenv("ELEVENLABS_API_KEY")
 
-@app.route("/chat", methods=["GET", "POST"])
-def chat():
-    """ Handle chatbot messages from Wix and manual tests """
-    try:
-        if request.method == "GET":
-            return jsonify({"error": "Use POST instead."}), 405  # ✅ Sends an error for GET
+@app.route("/", methods=["GET"])
+def home():
+    return "Chatbot is running! Use /chat to talk to it."
 
+def get_trained_response(user_input):
+    """ Check if the user question exists in the chatbot database """
+    return chatbot_responses.get(user_input, None)
+
+def get_openai_response(user_input):
+    """ Fetch a response from OpenAI ChatGPT (Updated for OpenAI v1.0+) """
+    client = openai.OpenAI()  # ✅ New OpenAI format
+
+    response = client.chat.completions.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": user_input}]
+    )
+    return response.choices[0].message.content
+
+@app.route("/chat", methods=["POST"])
+def chat():
+    """ Handle chatbot messages from Wix """
+    try:
+        # Ensure JSON request format
         if request.content_type != "application/json":
             return jsonify({"error": "Unsupported Media Type. Use 'application/json'."}), 415
 
@@ -45,7 +61,7 @@ def chat():
         return jsonify({"reply": response_text})
 
     except Exception as e:
-        print(f"Error in /chat: {str(e)}")  # Log the error
+        print(f"Error in /chat: {str(e)}")  # ✅ Log the error
         return jsonify({"error": "Internal Server Error"}), 500
 
 if __name__ == "__main__":
