@@ -19,29 +19,13 @@ except FileNotFoundError:
 openai.api_key = os.getenv("OPENAI_API_KEY")
 elevenlabs_api_key = os.getenv("ELEVENLABS_API_KEY")
 
-@app.route("/", methods=["GET"])
-def home():
-    return "Chatbot is running! Use /chat to talk to it."
-
-def get_trained_response(user_input):
-    """ Check if the user question exists in the chatbot database """
-    return chatbot_responses.get(user_input, None)
-
-def get_openai_response(user_input):
-    """ Fetch a response from OpenAI ChatGPT """
-    client = openai.OpenAI()  # ✅ Correct OpenAI v1.0 format
-
-    response = client.chat.completions.create(
-        model="gpt-4",
-        messages=[{"role": "user", "content": user_input}]
-    )
-    return response.choices[0].message.content
-
-@app.route("/chat", methods=["POST"])
+@app.route("/chat", methods=["GET", "POST"])
 def chat():
-    """ Handle chatbot messages from Wix """
+    """ Handle chatbot messages from Wix and manual tests """
     try:
-        # Ensure JSON request format
+        if request.method == "GET":
+            return jsonify({"message": "Chatbot API is running. Use POST to send messages."}), 200
+
         if request.content_type != "application/json":
             return jsonify({"error": "Unsupported Media Type. Use 'application/json'."}), 415
 
@@ -52,7 +36,7 @@ def chat():
         user_input = data.get("message", "")
 
         # Step 1: Check predefined responses
-        response_text = get_trained_response(user_input)
+        response_text = chatbot_responses.get(user_input, None)
 
         # Step 2: If no match, use OpenAI
         if response_text is None:
@@ -61,8 +45,18 @@ def chat():
         return jsonify({"reply": response_text})
 
     except Exception as e:
-        print(f"Error in /chat: {str(e)}")  # ✅ Log the error
+        print(f"🔥 ERROR in /chat: {str(e)}")  # ✅ Log the error clearly
         return jsonify({"error": "Internal Server Error"}), 500
+
+def get_openai_response(user_input):
+    """ Fetch a response from OpenAI ChatGPT """
+    client = openai.OpenAI()  # ✅ Updated for OpenAI v1.0+
+    
+    response = client.chat.completions.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": user_input}]
+    )
+    return response.choices[0].message.content
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))  # ✅ Use dynamic port for Render
