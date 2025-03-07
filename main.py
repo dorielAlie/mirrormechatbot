@@ -101,6 +101,9 @@ def chat():
         if voice_file:
             print(f"🎙️ Voice file generated: {voice_file}")
 
+        if voice_file:
+            print(f"🎙️ Voice file generated: {voice_file}")
+
         return jsonify({
             "reply": response_text,
             "voice_url": voice_file if voice_file else None
