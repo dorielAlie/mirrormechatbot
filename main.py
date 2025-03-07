@@ -36,41 +36,40 @@ def get_openai_response(user_input):
         print(f"🔥 ERROR: OpenAI API failed - {str(e)}")
         return "Error: OpenAI request failed"
 
-        def generate_voice(text):
-            """ Convert chatbot response to AI voice using ElevenLabs """
-            try:
-                ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
-                voice_url = "https://api.elevenlabs.io/v1/text-to-speech/m5MFSBXJFU12dJBpGS6c"  # ✅ JP 26 Mins voice ID
-                headers = {
-                    "xi-api-key": ELEVENLABS_API_KEY,
-                    "Content-Type": "application/json"
-                }
-                data = {
-                    "text": text,
-                    "model_id": "eleven_turbo_v2"
-                }
+def generate_voice(text):
+    """ Convert chatbot response to AI voice using ElevenLabs """
+    try:
+        ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
+        voice_url = "https://api.elevenlabs.io/v1/text-to-speech/m5MFSBXJFU12dJBpGS6c"  # ✅ JP 26 Mins voice ID
+        headers = {
+            "xi-api-key": ELEVENLABS_API_KEY,
+            "Content-Type": "application/json"
+        }
+        data = {
+            "text": text,
+            "model_id": "eleven_turbo_v2"
+        }
 
-                print(f"🛠 Sending text to ElevenLabs: {text}")  # ✅ Debugging log
+        print(f"🛠 Sending text to ElevenLabs: {text}")  
 
-                response = requests.post(voice_url, headers=headers, json=data)
+        response = requests.post(voice_url, headers=headers, json=data)
 
-                if response.status_code == 200:
-                    # ✅ Ensure the static directory exists
-                    if not os.path.exists("static"):
-                        os.makedirs("static")
+        if response.status_code == 200:
+            # ✅ Ensure the static directory exists
+            if not os.path.exists("static"):
+                os.makedirs("static")
 
-                    audio_filename = "static/response.mp3"
-                    with open(audio_filename, "wb") as f:
-                        f.write(response.content)
-                    print(f"✅ ElevenLabs Audio Saved: {audio_filename}")
-                    return f"https://mirrormechatbot.onrender.com/{audio_filename}"  # ✅ Returns URL to audio file
-                else:
-                    print(f"🔥 ERROR: ElevenLabs API failed - {response.text}")
-                    return None
-            except Exception as e:
-                print(f"🔥 ERROR: ElevenLabs request failed - {str(e)}")
-                return None
-
+            audio_filename = "static/response.mp3"
+            with open(audio_filename, "wb") as f:
+                f.write(response.content)
+            print(f"✅ ElevenLabs Audio Saved: {audio_filename}")
+            return f"https://mirrormechatbot.onrender.com/{audio_filename}"  
+        else:
+            print(f"🔥 ERROR: ElevenLabs API failed - {response.text}")
+            return None
+    except Exception as e:
+        print(f"🔥 ERROR: ElevenLabs request failed - {str(e)}")
+        return None
 
 @app.route("/chat", methods=["GET", "POST"])
 def chat():
@@ -100,19 +99,12 @@ def chat():
             voice_file = generate_voice(response_text)
         except Exception as e:
             print(f"🔥 ERROR: ElevenLabs request failed - {str(e)}")
-            voice_file = None  # Fail gracefully if voice generation fails
-
-        if voice_file:
-            print(f"🎙️ Voice file generated: {voice_file}")
-
-        if voice_file:
-            print(f"🎙️ Voice file generated: {voice_file}")
+            voice_file = None  
 
         return jsonify({
             "reply": response_text,
             "voice_url": voice_file if voice_file else None
         })
-
 
     except Exception as e:
         print(f"🔥 ERROR in /chat: {str(e)}")  
