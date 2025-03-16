@@ -1,14 +1,14 @@
-from flask import Flask, request, jsonify
+import os
 import json
 import openai
 import requests
-import os
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
 
-# Load predefined chatbot responses from JSON file
+# Load predefined chatbot responses
 try:
     with open("responses.json", "r") as file:
         chatbot_responses = json.load(file)
@@ -40,10 +40,9 @@ def get_openai_response(user_input):
 def generate_voice(text):
     """ Convert chatbot response to AI voice using ElevenLabs """
     try:
-        ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
-        voice_url = "https://api.elevenlabs.io/v1/text-to-speech/m5MFSBXJFU12dJBpGS6c"  # JP 26 Mins voice ID
+        voice_url = "https://api.elevenlabs.io/v1/text-to-speech/m5MFSBXJFU12dJBpGS6c"
         headers = {
-            "xi-api-key": ELEVENLABS_API_KEY,
+            "xi-api-key": elevenlabs_api_key,
             "Content-Type": "application/json"
         }
         data = {
@@ -56,7 +55,6 @@ def generate_voice(text):
         response = requests.post(voice_url, headers=headers, json=data)
 
         if response.status_code == 200:
-            # Ensure the static directory exists
             if not os.path.exists("static"):
                 os.makedirs("static")
 
@@ -72,32 +70,37 @@ def generate_voice(text):
         print(f"🔥 ERROR: ElevenLabs request failed - {str(e)}")
         return None
 
-def generate_avatar_video(audio_url):
-    """ Generate a talking avatar video using HeyGen """
+def generate_video(response_text):
+    """ Generate a talking AI video using HeyGen API """
     try:
-        HEYGEN_API_KEY = os.getenv("HEYGEN_API_KEY")
-        heygen_url = "https://api.heygen.com/v1/video/generate"
+        heygen_api_url = "https://api.heygen.com/v1/video/generate"
         headers = {
-            "Authorization": f"Bearer {HEYGEN_API_KEY}",
+            "Authorization": f"Bearer {heygen_api_key}",
             "Content-Type": "application/json"
         }
         data = {
-            "voice_url": audio_url,
-            "avatar_id": "YOUR_AVATAR_ID",  # Replace with your HeyGen Avatar ID
-            "background": "white"
+            "script": response_text,
+            "voice": "en-US-John",
+            "avatar": "your_avatar_id",
+            "background": "white",
+            "resolution": "1080p"
         }
 
-        print(f"🛠 Sending request to HeyGen: {data}")  
+        print(f"🛠 Sending request to HeyGen: {data}")
 
-        response = requests.post(heygen_url, headers=headers, json=data)
+        response = requests.post(heygen_api_url, headers=headers, json=data)
 
         if response.status_code == 200:
-            video_data = response.json()
-            video_url = video_data.get("video_url", None)
-            print(f"✅ HeyGen Video Generated: {video_url}")
-            return video_url
+            response_data = response.json()
+            video_url = response_data.get("video_url")
+            if video_url:
+                print(f"✅ HeyGen Video Created: {video_url}")
+                return video_url
+            else:
+                print("❌ No video URL in response.")
+                return None
         else:
-            print(f"🔥 ERROR: HeyGen API failed - {response.text}")
+            print(f"🔥 ERROR: HeyGen API failed - {response.status_code} - {response.text}")
             return None
     except Exception as e:
         print(f"🔥 ERROR: HeyGen request failed - {str(e)}")
@@ -127,23 +130,15 @@ def chat():
             response_text = "Checking outside... " + get_openai_response(user_input)
 
         # Step 3: Generate AI voice for the response
-        try:
-            voice_url = generate_voice(response_text)
-        except Exception as e:
-            print(f"🔥 ERROR: ElevenLabs request failed - {str(e)}")
-            voice_url = None  
+        voice_file = generate_voice(response_text)
 
-        # Step 4: Generate AI avatar video
-        try:
-            video_url = generate_avatar_video(voice_url) if voice_url else None
-        except Exception as e:
-            print(f"🔥 ERROR: HeyGen request failed - {str(e)}")
-            video_url = None  
+        # Step 4: Generate AI video for the response
+        video_file = generate_video(response_text)
 
         return jsonify({
             "reply": response_text,
-            "voice_url": voice_url if voice_url else None,
-            "video_url": video_url if video_url else None
+            "voice_url": voice_file if voice_file else None,
+            "video_url": video_file if video_file else None
         })
 
     except Exception as e:
