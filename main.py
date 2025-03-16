@@ -18,7 +18,7 @@ HEYGEN_VOICE_ID = "639d0dc76eff4b4f8d237249c0e00fe9"  # Replace with your HeyGen
 def generate_heygen_video(text):
     """ Generate a talking avatar video using HeyGen API """
     try:
-        url = "https://api.heygen.com/v1/videos"
+        url = "https://api.heygen.com/v1/video"
         headers = {
             "Authorization": f"Bearer {HEYGEN_API_KEY}",
             "Content-Type": "application/json"
